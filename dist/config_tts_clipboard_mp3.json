@@ -1,0 +1,13 @@
+{
+  "exclude_first_line": false,
+  "output_dir": "D:\\+Espaço CMaker\\Projetos\\#2026\\01-Converte Texto em MP3\\dist\\saida_mp3",
+  "mp3_backend": "edge",
+  "mp3_voice": "pt-BR-FranciscaNeural",
+  "mp3_rate": "+0%",
+  "mp3_pitch": "+0Hz",
+  "gt_tld_label": "pt-BR (padrão)",
+  "gt_speed": "Normal",
+  "read_voice_name": "",
+  "read_rate": 175,
+  "chunk_max_chars": 1100
+}
