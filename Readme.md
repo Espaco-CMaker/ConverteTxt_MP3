@@ -1,7 +1,3 @@
-Segue um **README.md** pronto para GitHub, alinhado com o projeto, histórico de versões, limitações conhecidas e identidade do **Espaço CMaker**. É só copiar e salvar como `README.md` na raiz do repositório.
-
----
-
 # TTS Clipboard MP3 🎙️
 
 **Conversão de texto colado em leitura por voz ou MP3 (Português)**
