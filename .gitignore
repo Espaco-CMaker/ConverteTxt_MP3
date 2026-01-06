@@ -1,0 +1,4 @@
+# Saídas de áudio
+saida_mp3/
+*.mp3
+*.wav
