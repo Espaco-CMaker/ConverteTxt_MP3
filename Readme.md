@@ -173,3 +173,5 @@ O **Espaço CMaker** é um laboratório Maker independente focado em:
 
 Uso **educacional e experimental**.
 Sinta-se livre para estudar, adaptar e evoluir o projeto.
+
+Criado 06/01/2025
