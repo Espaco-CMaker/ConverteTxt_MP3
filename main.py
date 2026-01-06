@@ -1,37 +1,22 @@
 """
 ================================================================================
-TTS_CLIPBOARD_MP3 v0.6.6
+TTS_CLIPBOARD_MP3 v0.6.7
 ================================================================================
 Arquivo:        main.py
 Projeto:        Texto colado → (1) Ler em voz alta (sem MP3) OU (2) Gerar MP3 (pt)
 Autor:          Fábio Bettio
 Licença:        Uso educacional / experimental
-Data:           05/01/2026
+Data:           06/01/2026
+Chat (contexto desta versão):
+    https://chatgpt.com/share/695d76d5-1714-8005-a00c-5ecf39ffea93
 
-DESCRIÇÃO
-    - Cole o texto (Ctrl+V) no editor.
-    - "LER AGORA" fala o texto sem gerar MP3 (offline via Windows SAPI / pyttsx3).
-    - "GERAR MP3" cria MP3 (online). Agora com Edge TTS (voz/rate/pitch reais).
-    - Nome do MP3 = 1ª linha do texto (sanitizado).
-
-CONTROLE DE EXECUÇÃO
-    - PAUSAR/CONTINUAR: pausa cooperativa entre blocos (chunks).
-    - PARAR: cancela o job atual e REINICIA O MOTOR ao final do cancelamento.
-    - Ao finalizar GERAR MP3 com sucesso: REINICIA O MOTOR automaticamente.
-
-PROGRESSO
-    - Barra determinística + percentual na área de status (abaixo do texto).
-    - Leitura e geração mostram % de conclusão por blocos.
-
-PERFORMANCE (textos grandes)
-    - Divide o texto em blocos e gera vários MP3s pequenos, depois concatena.
-    - Concat rápida usa FFmpeg (-c copy). Sem FFmpeg usa fallback (menos confiável).
-
-CONFIG (robusta)
-    - Existe "CONFIG RASCUNHO" (UI) e "CONFIG APLICADA" (cfg).
-    - Executar LER/MP3 usa SOMENTE a config aplicada.
-    - Só muda de fato quando clicar "SALVAR CONFIG".
-    - Botão "REINICIAR MOTOR" recupera o TTS offline.
+NOTAS
+    - Pasta de saída agora é configurável e persistente.
+    - Se não estiver configurada, o app pergunta ao iniciar e salva.
+    - Só altera pela guia Configurações (com SALVAR CONFIG).
+    - Nova guia LOG registra tudo com timestamp.
+    - Nova guia SOBRE (Fábio + Espaço CMaker + link do site).
+    - Problema conhecido (v0.6.6 marcada como estável): configs podem não aplicar no MP3.
 
 REQUISITOS
     pip install pyttsx3 gtts edge-tts
@@ -40,7 +25,14 @@ REQUISITOS
 
 ================================================================================
 CHANGELOG
+    v0.6.7 (06/01/2026) (~LINHAS A CONFIRMAR)
+        - Configuração persistente do diretório de saída (pergunta se vazio).
+        - Diretório só muda na guia Configurações (botão Procurar + Salvar).
+        - Guia LOG: inicialização, fechamento, travamento, leituras, conversões, erros,
+          alertas, avisos, ausência de recursos, status, com timestamp.
+        - Guia SOBRE: Fábio + Espaço CMaker + link do site cmaker.com.br.
     v0.6.6 (05/01/2026) [ESTÁVEL] (~930 linhas)
+        - NOTA: configurações NÃO aplicadas no GERAR MP3 (problema conhecido).
         - Status (barra + % + texto) movido para dentro da aba Editor (não corta).
         - Ao concluir GERAR MP3: reinicia motor automaticamente.
         - MP3 com Edge TTS: voz/rate/pitch passam a ter efeito real no MP3.
@@ -74,6 +66,9 @@ CHANGELOG
     v0.4.0 (05/01/2026) [ESTÁVEL] (~310 linhas)
         - Primeira versão utilizável (Ctrl+V → gerar MP3).
 ================================================================================
+REGRA DE LINHAS
+    - O número de linhas de v0.6.7 será corrigido na próxima interação.
+================================================================================
 """
 
 from __future__ import annotations
@@ -87,12 +82,14 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from dataclasses import dataclass, asdict
+from datetime import datetime
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 from tkinter import ttk
 
 from gtts import gTTS
@@ -107,8 +104,60 @@ try:
 except Exception:
     edge_tts = None
 
-APP_VERSION = "0.6.6"
+APP_VERSION = "0.6.7"
 CONFIG_PATH = Path.cwd() / "config_tts_clipboard_mp3.json"
+DEFAULT_OUT_DIR = (Path.cwd() / "saida_mp3")
+
+
+# =========================
+# LOG
+# =========================
+class AppLogger:
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._lines: List[str] = []
+        self._max_lines = 5000
+        self._log_file: Optional[Path] = None
+        self._on_newline_cb = None  # type: ignore
+
+    def set_log_file(self, path: Path):
+        self._log_file = path
+
+    def set_ui_callback(self, cb):
+        self._on_newline_cb = cb
+
+    def _ts(self) -> str:
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    def log(self, level: str, msg: str):
+        line = f"[{self._ts()}] [{level.upper():7}] {msg}"
+        with self._lock:
+            self._lines.append(line)
+            if len(self._lines) > self._max_lines:
+                self._lines = self._lines[-self._max_lines :]
+
+        # arquivo
+        if self._log_file is not None:
+            try:
+                self._log_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(self._log_file, "a", encoding="utf-8") as f:
+                    f.write(line + "\n")
+            except Exception:
+                pass
+
+        # UI
+        if self._on_newline_cb:
+            try:
+                self._on_newline_cb(line)
+            except Exception:
+                pass
+
+    def dump(self) -> str:
+        with self._lock:
+            return "\n".join(self._lines)
+
+
+LOG = AppLogger()
 
 
 # =========================
@@ -117,6 +166,9 @@ CONFIG_PATH = Path.cwd() / "config_tts_clipboard_mp3.json"
 @dataclass
 class AppConfig:
     exclude_first_line: bool = False
+
+    # Diretório de saída (novo)
+    output_dir: str = ""  # caminho persistido. se vazio, pergunta ao iniciar.
 
     # MP3 (Edge TTS / gTTS fallback)
     mp3_backend: str = "edge"  # edge|gtts
@@ -140,16 +192,17 @@ def load_config() -> AppConfig:
             data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
             allowed = {k: data[k] for k in data if k in AppConfig.__annotations__}
             return AppConfig(**allowed)
-        except Exception:
-            pass
+        except Exception as e:
+            LOG.log("error", f"Falha ao carregar config: {e}")
     return AppConfig()
 
 
 def save_config(cfg: AppConfig) -> None:
     try:
         CONFIG_PATH.write_text(json.dumps(asdict(cfg), ensure_ascii=False, indent=2), encoding="utf-8")
-    except Exception:
-        pass
+        LOG.log("info", f"Config salva em {CONFIG_PATH}")
+    except Exception as e:
+        LOG.log("error", f"Falha ao salvar config: {e}")
 
 
 # =========================
@@ -193,8 +246,8 @@ def open_folder(path: Path) -> None:
             subprocess.run(["open", str(path)], check=False)
         else:
             subprocess.run(["xdg-open", str(path)], check=False)
-    except Exception:
-        pass
+    except Exception as e:
+        LOG.log("warn", f"Falha ao abrir pasta: {e}")
 
 
 def ffmpeg_status() -> Tuple[bool, str]:
@@ -254,7 +307,7 @@ def smart_split_text(text: str, max_chars: int) -> List[str]:
         if cut == -1:
             cut = len(window)
 
-        chunk = s[i:i + cut].strip()
+        chunk = s[i : i + cut].strip()
         if chunk:
             chunks.append(chunk)
         i = i + cut
@@ -356,13 +409,19 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(f"TTS → Ler / MP3 (pt) v{APP_VERSION}")
-        self.geometry("1100x780")
-        self.minsize(980, 720)
+        self.geometry("1120x820")
+        self.minsize(1020, 760)
 
-        self.out_dir = Path.cwd() / "saida_mp3"
-        self.out_dir.mkdir(parents=True, exist_ok=True)
+        LOG.set_ui_callback(self._append_log_line)
 
         self.cfg = load_config()
+
+        # log file em pasta do app (ou no output quando configurado)
+        LOG.set_log_file(Path.cwd() / "tts_clipboard_mp3.log")
+        LOG.log("info", f"Inicializando v{APP_VERSION}")
+        LOG.log("info", f"Config: {CONFIG_PATH}")
+
+        self.out_dir = self._resolve_out_dir(initial=True)
 
         self._py_engine = None
         self._py_voices = []
@@ -372,17 +431,109 @@ class App(tk.Tk):
         self._pause_event.set()
         self._stop_event = threading.Event()
         self._current_job = "idle"
-
         self._restart_after_stop = False
 
         self._setup_style()
         self._build_ui()
         self._bind_shortcuts()
 
-        self.after(100, self._init_pyttsx3)
-        self.after(180, self._load_cfg_into_ui_staged)
-        self.after(240, self._refresh_summary)
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
 
+        self.after(80, self._ensure_outdir_prompt_if_missing)
+        self.after(120, self._init_pyttsx3)
+        self.after(200, self._load_cfg_into_ui_staged)
+        self.after(260, self._refresh_summary)
+
+    # -------- LOG UI --------
+    def _append_log_line(self, line: str):
+        try:
+            if not hasattr(self, "txt_log"):
+                return
+            self.txt_log.configure(state="normal")
+            self.txt_log.insert("end", line + "\n")
+            self.txt_log.see("end")
+            self.txt_log.configure(state="disabled")
+        except Exception:
+            pass
+
+    def _on_close(self):
+        LOG.log("info", "Solicitado fechamento do app.")
+        try:
+            if self._is_busy:
+                self._stop_event.set()
+                self._pause_event.set()
+                time.sleep(0.05)
+        except Exception:
+            pass
+        try:
+            if self._py_engine is not None:
+                self._py_engine.stop()
+        except Exception:
+            pass
+        LOG.log("info", "Encerrando.")
+        self.destroy()
+
+    # -------- OUTPUT DIR --------
+    def _resolve_out_dir(self, initial: bool = False) -> Path:
+        path = (self.cfg.output_dir or "").strip()
+        if path:
+            p = Path(path)
+            try:
+                p.mkdir(parents=True, exist_ok=True)
+                return p
+            except Exception as e:
+                LOG.log("error", f"Diretório inválido ({path}): {e}")
+
+        # fallback
+        try:
+            DEFAULT_OUT_DIR.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+        if initial:
+            LOG.log("warn", f"Diretório de saída não configurado. Fallback: {DEFAULT_OUT_DIR}")
+        return DEFAULT_OUT_DIR
+
+    def _ensure_outdir_prompt_if_missing(self):
+        # Se output_dir ainda vazio, perguntar e persistir.
+        if (self.cfg.output_dir or "").strip():
+            return
+
+        LOG.log("warn", "Diretório de saída não informado. Solicitando ao usuário.")
+        messagebox.showinfo(
+            "Pasta de saída",
+            "Selecione a pasta onde os MP3 serão gerados.\nSe cancelar, será usada a pasta padrão do projeto.",
+        )
+
+        chosen = filedialog.askdirectory(title="Selecione a pasta de saída (MP3)")
+        if chosen:
+            self.cfg.output_dir = chosen
+            save_config(self.cfg)
+            self.out_dir = self._resolve_out_dir()
+            LOG.log("info", f"Diretório de saída definido: {self.out_dir}")
+        else:
+            # persistir padrão mesmo assim (para não perguntar sempre)
+            self.cfg.output_dir = str(DEFAULT_OUT_DIR)
+            save_config(self.cfg)
+            self.out_dir = self._resolve_out_dir()
+            LOG.log("warn", f"Usuário cancelou. Persistido padrão: {self.out_dir}")
+
+        # atualizar UI
+        try:
+            self.lbl_outdir.config(text=str(self.out_dir))
+            self.var_status.set(f"Pronto. Saída: {self.out_dir}")
+        except Exception:
+            pass
+
+        # preferir log file dentro da saída (opcional)
+        try:
+            LOG.set_log_file(self.out_dir / "tts_clipboard_mp3.log")
+            LOG.log("info", f"Log file movido para: {self.out_dir / 'tts_clipboard_mp3.log'}")
+        except Exception:
+            pass
+
+        self._refresh_summary()
+
+    # -------- STYLE/UI --------
     def _setup_style(self):
         style = ttk.Style(self)
         try:
@@ -412,9 +563,15 @@ class App(tk.Tk):
 
         self.tab_main = ttk.Frame(nb)
         self.tab_cfg = ttk.Frame(nb)
+        self.tab_log = ttk.Frame(nb)
+        self.tab_about = ttk.Frame(nb)
+
         nb.add(self.tab_main, text="Editor")
         nb.add(self.tab_cfg, text="Configurações")
+        nb.add(self.tab_log, text="LOG")
+        nb.add(self.tab_about, text="SOBRE")
 
+        # -------- Editor
         toolbar = ttk.Frame(self.tab_main, style="Toolbar.TFrame")
         toolbar.pack(fill="x")
 
@@ -464,7 +621,8 @@ class App(tk.Tk):
         self.lbl_chunks.pack(anchor="w", pady=(6, 0))
 
         ttk.Label(right, text="Saída:", style="Hint.TLabel").pack(anchor="w", pady=(14, 0))
-        ttk.Label(right, text=str(self.out_dir), wraplength=320).pack(anchor="w")
+        self.lbl_outdir = ttk.Label(right, text=str(self.out_dir), wraplength=320)
+        self.lbl_outdir.pack(anchor="w")
 
         self.lbl_engine = ttk.Label(right, text="Leitura: carregando...", style="Hint.TLabel", wraplength=320)
         self.lbl_engine.pack(anchor="w", pady=(14, 0))
@@ -479,7 +637,7 @@ class App(tk.Tk):
         )
         self.lbl_ffmpeg.pack(anchor="w", pady=(6, 0))
 
-        # STATUS + PROGRESSO (DENTRO DA ABA EDITOR, abaixo do texto)
+        # status + progresso
         status = ttk.Frame(self.tab_main, padding=(12, 8))
         status.pack(fill="x", padx=12, pady=(0, 10))
 
@@ -489,20 +647,29 @@ class App(tk.Tk):
         self.var_progress = tk.IntVar(value=0)
         self.lbl_pct = ttk.Label(status, text="0%", width=5, anchor="e")
         self.lbl_pct.pack(side="right", padx=(8, 0))
-
         self.pb = ttk.Progressbar(status, mode="determinate", maximum=100, variable=self.var_progress, length=260)
         self.pb.pack(side="right")
 
-        # ---------------- Config tab ----------------
+        # -------- Configurações
         cfg = ttk.Frame(self.tab_cfg, padding=14)
         cfg.pack(fill="both", expand=True)
+
+        g0 = ttk.Labelframe(cfg, text="Diretório de saída (MP3)", style="Card.TLabelframe")
+        g0.pack(fill="x", padx=4, pady=(0, 12))
+
+        row0 = ttk.Frame(g0)
+        row0.pack(fill="x")
+        ttk.Label(row0, text="Pasta:").pack(side="left")
+        self.var_outdir_staged = tk.StringVar(value=(self.cfg.output_dir or str(self.out_dir)))
+        self.ent_outdir = ttk.Entry(row0, textvariable=self.var_outdir_staged, width=80, state="readonly")
+        self.ent_outdir.pack(side="left", padx=(8, 8))
+        ttk.Button(row0, text="PROCURAR...", command=self.browse_outdir).pack(side="left")
 
         g1 = ttk.Labelframe(cfg, text="LER AGORA (offline - pyttsx3 / SAPI)", style="Card.TLabelframe")
         g1.pack(fill="x", padx=4, pady=(0, 12))
 
         row = ttk.Frame(g1)
         row.pack(fill="x")
-
         ttk.Label(row, text="Voz:").pack(side="left")
         self.var_read_voice_staged = tk.StringVar(value=self.cfg.read_voice_name or "(carregando...)")
         self.cmb_voice = ttk.Combobox(row, textvariable=self.var_read_voice_staged, state="readonly", width=52)
@@ -519,7 +686,7 @@ class App(tk.Tk):
         self.lbl_read_warn = ttk.Label(g1, text="", style="Danger.TLabel")
         self.lbl_read_warn.pack(anchor="w", pady=(8, 0))
 
-        g2 = ttk.Labelframe(cfg, text="GERAR MP3 (Edge TTS recomendado)", style="Card.TLabelframe")
+        g2 = ttk.Labelframe(cfg, text="GERAR MP3", style="Card.TLabelframe")
         g2.pack(fill="x", padx=4)
 
         row2 = ttk.Frame(g2)
@@ -558,16 +725,13 @@ class App(tk.Tk):
         self.cmb_spd = ttk.Combobox(row2b, textvariable=self.var_gt_speed_staged, values=["Normal", "Lenta"], state="readonly", width=10)
         self.cmb_spd.pack(side="left", padx=(8, 0))
 
-        info = "Edge TTS: voz/rate/pitch têm efeito no MP3.\n" \
-               "gTTS: só endpoint e slow; não existe pitch/voz real."
-        ttk.Label(g2, text=info, style="Hint.TLabel").pack(anchor="w", pady=(10, 0))
+        ttk.Label(g2, text="gTTS não tem voz/pitch/rate reais. Edge TTS tem.", style="Hint.TLabel").pack(anchor="w", pady=(10, 0))
 
         g3 = ttk.Labelframe(cfg, text="Performance (textos grandes)", style="Card.TLabelframe")
         g3.pack(fill="x", padx=4, pady=(12, 0))
 
         row3 = ttk.Frame(g3)
         row3.pack(fill="x")
-
         ttk.Label(row3, text="Tamanho do bloco (chars):").pack(side="left")
         self.var_chunk_staged = tk.IntVar(value=int(self.cfg.chunk_max_chars))
         self.sld_chunk = ttk.Scale(row3, from_=500, to=2500, orient="horizontal", length=340)
@@ -585,12 +749,99 @@ class App(tk.Tk):
         self.btn_save = ttk.Button(actions, text="SALVAR CONFIG", style="Primary.TButton", command=self.save_and_apply_config)
         self.btn_save.pack(side="right", padx=(10, 0))
 
-        ttk.Label(actions, text="Você pode mexer. Só vale depois de SALVAR.", style="Hint.TLabel").pack(side="left")
+        ttk.Label(actions, text="Só vale depois de SALVAR.", style="Hint.TLabel").pack(side="left")
+
+        # -------- LOG TAB
+        logwrap = ttk.Frame(self.tab_log, padding=12)
+        logwrap.pack(fill="both", expand=True)
+
+        top_log = ttk.Frame(logwrap)
+        top_log.pack(fill="x")
+
+        ttk.Button(top_log, text="COPIAR LOG", command=self.copy_log_to_clipboard).pack(side="left")
+        ttk.Button(top_log, text="LIMPAR LOG (UI)", command=self.clear_log_ui).pack(side="left", padx=(8, 0))
+        ttk.Button(top_log, text="ABRIR ARQUIVO DE LOG", command=self.open_log_file).pack(side="left", padx=(8, 0))
+
+        ttk.Label(top_log, text="(tudo é logado com timestamp)", style="Hint.TLabel").pack(side="right")
+
+        box = ttk.Labelframe(logwrap, text="Log do sistema", style="Card.TLabelframe")
+        box.pack(fill="both", expand=True, pady=(10, 0))
+
+        self.txt_log = tk.Text(box, wrap="none", font=("Consolas", 10))
+        self.txt_log.pack(fill="both", expand=True, side="left")
+        self.txt_log.configure(state="disabled")
+
+        sb_y = ttk.Scrollbar(box, command=self.txt_log.yview)
+        sb_y.pack(fill="y", side="right")
+        self.txt_log.configure(yscrollcommand=sb_y.set)
+
+        # -------- ABOUT TAB
+        about = ttk.Frame(self.tab_about, padding=18)
+        about.pack(fill="both", expand=True)
+
+        txt = (
+            "Fábio Bettio\n"
+            "Professor, Engenheiro de Computação, Mestre em Educação\n"
+            "Fundador do Espaço CMaker\n\n"
+            "O Espaço CMaker é um makerspace focado em cultura Maker, robótica, prototipagem, IoT e formação.\n\n"
+            "Site: cmaker.com.br"
+        )
+        ttk.Label(about, text=txt, justify="left").pack(anchor="nw")
+
+        ttk.Button(about, text="ABRIR SITE (cmaker.com.br)", command=lambda: self._open_url("https://cmaker.com.br")).pack(anchor="w", pady=(14, 0))
 
         self.after(50, lambda: self.txt.focus_set())
-
         self.btn_pause.config(state="disabled")
         self.btn_stop.config(state="disabled")
+
+        # preencher log UI com o que já existe
+        self.after(100, lambda: self._append_log_line("--- LOG INICIAL ---"))
+        self.after(120, lambda: self._append_log_line(LOG.dump()))
+
+    def _open_url(self, url: str):
+        LOG.log("info", f"Abrindo URL: {url}")
+        try:
+            if sys.platform.startswith("win"):
+                os.startfile(url)  # type: ignore[attr-defined]
+            elif sys.platform == "darwin":
+                subprocess.run(["open", url], check=False)
+            else:
+                subprocess.run(["xdg-open", url], check=False)
+        except Exception as e:
+            LOG.log("error", f"Falha ao abrir URL: {e}")
+            messagebox.showerror("Erro", f"Não foi possível abrir o link.\n{e}")
+
+    def copy_log_to_clipboard(self):
+        data = LOG.dump()
+        self.clipboard_clear()
+        self.clipboard_append(data)
+        self.var_status.set("LOG copiado para a área de transferência.")
+        LOG.log("info", "LOG copiado para clipboard.")
+
+    def clear_log_ui(self):
+        try:
+            self.txt_log.configure(state="normal")
+            self.txt_log.delete("1.0", "end")
+            self.txt_log.configure(state="disabled")
+            self.var_status.set("LOG (UI) limpo. Arquivo permanece.")
+            LOG.log("warn", "LOG da UI limpo pelo usuário.")
+        except Exception:
+            pass
+
+    def open_log_file(self):
+        lf = getattr(LOG, "_log_file", None)
+        if lf is None:
+            messagebox.showerror("Erro", "Arquivo de log não configurado.")
+            return
+        open_folder(Path(lf).parent)
+
+    def browse_outdir(self):
+        if self._is_busy:
+            return
+        chosen = filedialog.askdirectory(title="Selecione a pasta de saída (MP3)")
+        if chosen:
+            self.var_outdir_staged.set(chosen)
+            LOG.log("info", f"Diretório (rascunho) selecionado: {chosen}")
 
     def _bind_shortcuts(self):
         self.bind("<F5>", lambda e: self.read_now())
@@ -603,7 +854,6 @@ class App(tk.Tk):
         self.var_chunk_staged.set(int(float(v)))
         self._refresh_summary()
 
-    # --------- PROGRESSO ----------
     def _set_progress(self, pct: int):
         pct = max(0, min(100, int(pct)))
         self.var_progress.set(pct)
@@ -612,15 +862,16 @@ class App(tk.Tk):
     def _reset_progress(self):
         self._set_progress(0)
 
-    # --------- staged <-> applied cfg ----------
     def _load_cfg_into_ui_staged(self):
         self.var_exclude_first_staged.set(bool(self.cfg.exclude_first_line))
+
+        # outdir staged
+        self.var_outdir_staged.set(self.cfg.output_dir or str(self.out_dir))
 
         self.var_mp3_backend_staged.set(self.cfg.mp3_backend)
         self.var_mp3_voice_staged.set(self.cfg.mp3_voice)
         self.var_mp3_rate_staged.set(self.cfg.mp3_rate)
         self.var_mp3_pitch_staged.set(self.cfg.mp3_pitch)
-
         self.var_gt_tld_staged.set(self.cfg.gt_tld_label)
         self.var_gt_speed_staged.set(self.cfg.gt_speed)
 
@@ -637,9 +888,26 @@ class App(tk.Tk):
         if self._is_busy:
             return
 
+        # diretório de saída (só aqui altera)
+        outdir = (self.var_outdir_staged.get() or "").strip()
+        if not outdir:
+            messagebox.showerror("Erro", "Defina um diretório de saída (MP3).")
+            LOG.log("error", "SALVAR CONFIG falhou: diretório de saída vazio.")
+            return
+        try:
+            Path(outdir).mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            messagebox.showerror("Erro", f"Diretório inválido.\n{e}")
+            LOG.log("error", f"SALVAR CONFIG falhou: diretório inválido ({outdir}): {e}")
+            return
+
+        self.cfg.output_dir = outdir
+        self.out_dir = Path(outdir)
+        self.lbl_outdir.config(text=str(self.out_dir))
+
         self.cfg.exclude_first_line = bool(self.var_exclude_first_staged.get())
 
-        self.cfg.mp3_backend = self.var_mp3_backend_staged.get().strip() or "edge"
+        self.cfg.mp3_backend = (self.var_mp3_backend_staged.get().strip() or "edge").lower()
         self.cfg.mp3_voice = self.var_mp3_voice_staged.get().strip() or "pt-BR-FranciscaNeural"
         self.cfg.mp3_rate = self.var_mp3_rate_staged.get().strip() or "+0%"
         self.cfg.mp3_pitch = self.var_mp3_pitch_staged.get().strip() or "+0Hz"
@@ -652,8 +920,17 @@ class App(tk.Tk):
         self.cfg.chunk_max_chars = int(self.var_chunk_staged.get())
 
         save_config(self.cfg)
+
+        # log file preferencialmente na saída
+        try:
+            LOG.set_log_file(self.out_dir / "tts_clipboard_mp3.log")
+            LOG.log("info", f"Log file definido: {self.out_dir / 'tts_clipboard_mp3.log'}")
+        except Exception:
+            pass
+
         self._reinit_pyttsx3()
         self.var_status.set("Config salva e aplicada.")
+        LOG.log("info", "Config salva e aplicada.")
         self._refresh_summary()
 
     def restart_engine(self):
@@ -661,8 +938,8 @@ class App(tk.Tk):
             return
         self._reinit_pyttsx3()
         self.var_status.set("Motor reiniciado.")
+        LOG.log("warn", "Motor reiniciado manualmente.")
 
-    # --------- pause/stop ----------
     def pause_job(self):
         if not self._is_busy:
             return
@@ -670,10 +947,12 @@ class App(tk.Tk):
             self._pause_event.clear()
             self.btn_pause.config(text="CONTINUAR")
             self.var_status.set("Pausado.")
+            LOG.log("info", "Pausado.")
         else:
             self._pause_event.set()
             self.btn_pause.config(text="PAUSAR")
             self.var_status.set("Continuando...")
+            LOG.log("info", "Continuando...")
 
     def stop_job(self):
         if not self._is_busy:
@@ -687,6 +966,7 @@ class App(tk.Tk):
         except Exception:
             pass
         self.var_status.set("Parando... (vai reiniciar o motor)")
+        LOG.log("warn", "Parar solicitado. Reiniciar motor ao finalizar.")
 
     def _reset_job_flags(self):
         self._stop_event.clear()
@@ -701,7 +981,6 @@ class App(tk.Tk):
             self._restart_after_stop = False
             self.after(50, self._reinit_pyttsx3)
 
-    # --------- Text handling ----------
     def _on_text_modified(self, _evt=None):
         if self.txt.edit_modified():
             self._refresh_summary()
@@ -710,11 +989,9 @@ class App(tk.Tk):
     def _refresh_summary(self):
         text = self.txt.get("1.0", "end-1c")
         self.lbl_len.config(text=f"Caracteres: {len(text)}")
-
         title = pick_first_nonempty_line(text) if text.strip() else "(vazio)"
         title = sanitize_filename(title)
         self.lbl_name.config(text=f"Nome do MP3: {title if title else '(vazio)'}")
-
         body = self._get_text_to_speak(use_applied_cfg=True)
         est = len(smart_split_text(body, max_chars=int(self.cfg.chunk_max_chars))) if body else 0
         self.lbl_chunks.config(text=f"Blocos estimados: {est}")
@@ -724,6 +1001,7 @@ class App(tk.Tk):
             return
         self.txt.delete("1.0", "end")
         self.var_status.set("Texto limpo.")
+        LOG.log("info", "Texto limpo.")
         self._refresh_summary()
         self._reset_progress()
 
@@ -738,10 +1016,8 @@ class App(tk.Tk):
             return body if body else raw
         return raw
 
-    # --------- Busy lock ----------
     def _set_busy(self, busy: bool, msg: str = ""):
         self._is_busy = busy
-
         self.btn_gen.config(state="disabled" if busy else "normal")
         self.btn_save.config(state="disabled" if busy else "normal")
         self.btn_restart.config(state="disabled" if busy else "normal")
@@ -752,37 +1028,16 @@ class App(tk.Tk):
         self.btn_pause.config(state="normal" if busy else "disabled")
         self.btn_stop.config(state="normal" if busy else "disabled")
 
-        cfg_state = "disabled" if busy else "readonly"
-        try:
-            self.cmb_voice.configure(state=cfg_state)
-            self.cmb_backend.configure(state=cfg_state)
-            self.cmb_tld.configure(state=cfg_state)
-            self.cmb_spd.configure(state=cfg_state)
-        except Exception:
-            pass
-
-        try:
-            self.sld_rate.configure(state="disabled" if busy else "normal")
-            self.sld_chunk.configure(state="disabled" if busy else "normal")
-        except Exception:
-            pass
-
-        try:
-            self.ent_mp3_voice.configure(state="disabled" if busy else "normal")
-            self.ent_mp3_rate.configure(state="disabled" if busy else "normal")
-            self.ent_mp3_pitch.configure(state="disabled" if busy else "normal")
-        except Exception:
-            pass
-
         if msg:
             self.var_status.set(msg)
+            LOG.log("status", msg)
 
-    # --------- pyttsx3 ----------
     def _init_pyttsx3(self):
         if pyttsx3 is None:
             self.lbl_engine.config(text="Leitura: indisponível (instale pyttsx3).")
             self.btn_read.config(state="disabled")
             self.lbl_read_warn.config(text="Instale: pip install pyttsx3")
+            LOG.log("error", "pyttsx3 ausente. Leitura offline indisponível.")
             return
         self._reinit_pyttsx3()
 
@@ -796,19 +1051,19 @@ class App(tk.Tk):
                 except Exception:
                     pass
                 self._py_engine = None
-
             self._py_engine = pyttsx3.init()
             self._load_voices_into_ui()
             self._apply_pyttsx3_settings_from_cfg()
-
             self.lbl_engine.config(text="Leitura: OK (offline).")
             self.lbl_read_warn.config(text="")
             self._set_busy(False)
+            LOG.log("info", "Motor pyttsx3 reiniciado.")
         except Exception as e:
             self._py_engine = None
             self.lbl_engine.config(text="Leitura: falhou ao inicializar/reiniciar.")
             self.btn_read.config(state="disabled")
             self.lbl_read_warn.config(text=f"Erro TTS: {e}")
+            LOG.log("error", f"Falha ao reiniciar pyttsx3: {e}")
 
     def _load_voices_into_ui(self):
         if self._py_engine is None:
@@ -831,6 +1086,7 @@ class App(tk.Tk):
                     self.var_read_voice_staged.set(names[0])
         else:
             self.var_read_voice_staged.set("(nenhuma voz encontrada)")
+            LOG.log("warn", "Nenhuma voz encontrada no pyttsx3/SAPI.")
 
     def _apply_pyttsx3_settings_from_cfg(self):
         if self._py_engine is None:
@@ -845,11 +1101,9 @@ class App(tk.Tk):
         if voice_id:
             self._py_engine.setProperty("voice", voice_id)
 
-    # --------- READ ----------
     def read_now(self):
         if self._is_busy:
             return
-
         text_to_speak = self._get_text_to_speak(use_applied_cfg=True)
         if not text_to_speak:
             messagebox.showerror("Erro", "Cole um texto na caixa (Ctrl+V).")
@@ -864,6 +1118,7 @@ class App(tk.Tk):
 
         chunks = smart_split_text(text_to_speak, max_chars=max(800, int(self.cfg.chunk_max_chars)))
         total = max(1, len(chunks))
+        LOG.log("info", f"Leitura iniciada: {total} blocos")
 
         def worker():
             self.after(0, lambda: self._set_busy(True, f"Lendo... (0/{total})"))
@@ -875,27 +1130,26 @@ class App(tk.Tk):
                     self._pause_event.wait()
                     if self._stop_event.is_set():
                         break
-
                     pct = int((idx / total) * 100)
                     self.after(0, lambda i=idx, p=pct: (self.var_status.set(f"Lendo... ({i}/{total})"), self._set_progress(p)))
-
                     self._py_engine.say(chunk)
                     self._py_engine.runAndWait()
 
                 if self._stop_event.is_set():
                     self.after(0, lambda: self._set_busy(False, "Leitura cancelada."))
+                    LOG.log("warn", "Leitura cancelada.")
                 else:
                     self.after(0, lambda: (self._set_progress(100), self._set_busy(False, "Leitura concluída.")))
+                    LOG.log("info", "Leitura concluída.")
             except Exception as e:
-                self._py_engine = None
                 self.after(0, lambda: self._set_busy(False, f"Falhou: {e}"))
+                LOG.log("error", f"Erro em leitura: {e}")
                 self.after(0, lambda: messagebox.showerror("Erro ao ler", str(e)))
             finally:
                 self._end_job_cleanup()
 
         threading.Thread(target=worker, daemon=True).start()
 
-    # --------- MP3 ----------
     def generate_mp3(self):
         if self._is_busy:
             return
@@ -919,16 +1173,19 @@ class App(tk.Tk):
 
         chunks = smart_split_text(text_to_speak, max_chars=int(self.cfg.chunk_max_chars))
         total = max(1, len(chunks))
-        ok_ff, _ = ffmpeg_status()
+        ok_ff, ffmsg = ffmpeg_status()
+        if not ok_ff:
+            LOG.log("warn", f"FFmpeg ausente: {ffmsg}")
 
-        # snapshot da config aplicada (garante efeito no GERAR)
         backend = (self.cfg.mp3_backend or "edge").strip().lower()
         voice = (self.cfg.mp3_voice or "pt-BR-FranciscaNeural").strip()
         rate = (self.cfg.mp3_rate or "+0%").strip()
         pitch = (self.cfg.mp3_pitch or "+0Hz").strip()
-
         tld = self.TLD_OPTIONS.get(self.cfg.gt_tld_label, "com.br")
         slow = True if self.cfg.gt_speed == "Lenta" else False
+
+        LOG.log("info", f"Conversão MP3 iniciada: {total} blocos → {mp3_path.name} (out={self.out_dir})")
+        LOG.log("info", f"MP3 cfg: backend={backend} voice={voice} rate={rate} pitch={pitch} | gTTS tld={tld} slow={slow}")
 
         def worker():
             self.after(0, lambda: self._set_busy(True, f"Gerando MP3... (0/{total})"))
@@ -952,7 +1209,8 @@ class App(tk.Tk):
                         if backend == "edge" and edge_tts is not None:
                             asyncio.run(edge_tts_save_mp3(chunk, part, voice=voice, rate=rate, pitch=pitch))
                         else:
-                            # fallback gTTS (não tem pitch/voz real)
+                            if backend == "edge" and edge_tts is None:
+                                LOG.log("warn", "edge-tts ausente. Fallback para gTTS.")
                             gTTS(text=chunk, lang="pt", tld=tld, slow=slow).save(str(part))
 
                         parts.append(part)
@@ -965,19 +1223,21 @@ class App(tk.Tk):
 
                 self.after(0, lambda: self._set_progress(100))
                 self.after(0, lambda: self._set_busy(False, f"OK: {mp3_path.name}"))
+                LOG.log("info", f"Conversão concluída: {mp3_path}")
 
                 extra = f"Arquivo: {mp3_path.name}"
                 if backend == "edge" and edge_tts is None:
-                    extra += "\nAviso: edge-tts não instalado. Usado gTTS (sem voz/pitch)."
+                    extra += "\nAviso: edge-tts não instalado. Usado gTTS."
                 if not ok_ff:
                     extra += "\nAviso: FFmpeg não encontrado. Concat fallback pode falhar em alguns casos."
 
-                # ao terminar, reinicia motor (como você pediu)
+                # ao terminar: reinicia motor
                 self.after(0, self._reinit_pyttsx3)
                 self.after(0, lambda: DoneDialog(self, self.out_dir, extra=extra))
 
             except Exception as e:
                 self.after(0, lambda: self._set_busy(False, f"Falhou/cancelado: {e}"))
+                LOG.log("error", f"Erro em conversão MP3: {e}")
                 if "cancelada" not in str(e).lower():
                     self.after(0, lambda: messagebox.showerror("Erro ao gerar MP3", str(e)))
             finally:

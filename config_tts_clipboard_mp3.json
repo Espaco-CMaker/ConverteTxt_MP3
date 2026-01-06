@@ -1,0 +1,13 @@
+{
+  "exclude_first_line": false,
+  "output_dir": "D:/+Espaço CMaker/Cursos/EAD/Capacitação de Professores/audios",
+  "mp3_backend": "edge",
+  "mp3_voice": "pt-BR-FranciscaNeural",
+  "mp3_rate": "+0%",
+  "mp3_pitch": "+0Hz",
+  "gt_tld_label": "pt-BR (padrão)",
+  "gt_speed": "Normal",
+  "read_voice_name": "Microsoft Maria Desktop - Portuguese(Brazil)",
+  "read_rate": 175,
+  "chunk_max_chars": 1100
+}

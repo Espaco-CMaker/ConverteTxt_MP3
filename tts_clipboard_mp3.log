@@ -1,0 +1,7 @@
+[2026-01-06 18:02:49] [INFO   ] Inicializando v0.6.7
+[2026-01-06 18:02:49] [INFO   ] Config: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\config_tts_clipboard_mp3.json
+[2026-01-06 18:02:49] [WARN   ] Diretório de saída não configurado. Fallback: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\saida_mp3
+[2026-01-06 18:02:49] [WARN   ] Diretório de saída não informado. Solicitando ao usuário.
+[2026-01-06 18:02:49] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-06 18:03:04] [INFO   ] Config salva em D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\config_tts_clipboard_mp3.json
+[2026-01-06 18:03:04] [INFO   ] Diretório de saída definido: D:\+Espaço CMaker\Cursos\EAD\Capacitação de Professores\audios
