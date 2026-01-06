@@ -173,11 +173,3 @@ O **Espaço CMaker** é um laboratório Maker independente focado em:
 
 Uso **educacional e experimental**.
 Sinta-se livre para estudar, adaptar e evoluir o projeto.
-
----
-
-Se quiser, no próximo passo eu:
-
-* adiciono **LOG persistente em arquivo**
-* estruturo **aba LOG + aba SOBRE no código**
-* ou preparo **issues padrão** para o GitHub (bug, feature, roadmap).
