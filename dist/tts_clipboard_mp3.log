@@ -5,3 +5,119 @@
 [2026-01-06 20:52:18] [INFO   ] Motor pyttsx3 reiniciado.
 [2026-01-06 20:52:22] [INFO   ] Config salva em D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\config_tts_clipboard_mp3.json
 [2026-01-06 20:52:22] [WARN   ] Usuário cancelou. Persistido padrão: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3
+[2026-01-06 21:01:06] [INFO   ] Inicializando v0.6.7
+[2026-01-06 21:01:06] [INFO   ] Config: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\config_tts_clipboard_mp3.json
+[2026-01-06 21:01:06] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-06 21:01:10] [INFO   ] Leitura iniciada: 1 blocos
+[2026-01-06 21:01:10] [STATUS ] Lendo... (0/1)
+[2026-01-06 21:01:11] [INFO   ] Leitura concluída.
+[2026-01-06 21:01:11] [STATUS ] Leitura concluída.
+[2026-01-06 21:01:14] [INFO   ] Leitura iniciada: 1 blocos
+[2026-01-06 21:01:14] [STATUS ] Lendo... (0/1)
+[2026-01-06 21:01:14] [INFO   ] Leitura concluída.
+[2026-01-06 21:01:14] [STATUS ] Leitura concluída.
+[2026-01-06 21:01:16] [INFO   ] Leitura iniciada: 1 blocos
+[2026-01-06 21:01:16] [STATUS ] Lendo... (0/1)
+[2026-01-06 21:01:16] [INFO   ] Leitura concluída.
+[2026-01-06 21:01:16] [STATUS ] Leitura concluída.
+[2026-01-06 21:01:17] [INFO   ] Leitura iniciada: 1 blocos
+[2026-01-06 21:01:17] [STATUS ] Lendo... (0/1)
+[2026-01-06 21:01:17] [INFO   ] Leitura concluída.
+[2026-01-06 21:01:17] [STATUS ] Leitura concluída.
+[2026-01-06 21:01:21] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-06 21:01:21] [WARN   ] Motor reiniciado manualmente.
+[2026-01-06 21:01:23] [INFO   ] Leitura iniciada: 1 blocos
+[2026-01-06 21:01:23] [STATUS ] Lendo... (0/1)
+[2026-01-06 21:01:24] [STATUS ] Leitura concluída.
+[2026-01-06 21:01:24] [INFO   ] Leitura concluída.
+[2026-01-06 21:01:27] [INFO   ] Leitura iniciada: 1 blocos
+[2026-01-06 21:01:27] [STATUS ] Lendo... (0/1)
+[2026-01-06 21:01:27] [INFO   ] Leitura concluída.
+[2026-01-06 21:01:27] [STATUS ] Leitura concluída.
+[2026-01-06 21:01:29] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-06 21:01:29] [WARN   ] Motor reiniciado manualmente.
+[2026-01-06 21:01:31] [INFO   ] Leitura iniciada: 1 blocos
+[2026-01-06 21:01:31] [STATUS ] Lendo... (0/1)
+[2026-01-06 21:01:32] [INFO   ] Leitura concluída.
+[2026-01-06 21:01:32] [STATUS ] Leitura concluída.
+[2026-01-06 21:01:33] [INFO   ] Solicitado fechamento do app.
+[2026-01-06 21:01:33] [INFO   ] Encerrando.
+[2026-01-09 10:14:31] [INFO   ] Inicializando v0.6.7
+[2026-01-09 10:14:31] [INFO   ] Config: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\config_tts_clipboard_mp3.json
+[2026-01-09 10:14:31] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-09 10:14:55] [INFO   ] Conversão MP3 iniciada: 16 blocos → Objetivo da aula.mp3 (out=D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3)
+[2026-01-09 10:14:55] [INFO   ] MP3 cfg: backend=edge voice=pt-BR-FranciscaNeural rate=+0% pitch=+0Hz | gTTS tld=com.br slow=False
+[2026-01-09 10:14:55] [STATUS ] Gerando MP3... (0/16)
+[2026-01-09 10:16:57] [INFO   ] Conversão concluída: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3\Objetivo da aula.mp3
+[2026-01-09 10:16:57] [STATUS ] OK: Objetivo da aula.mp3
+[2026-01-09 10:16:57] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-09 11:18:28] [INFO   ] Leitura iniciada: 15 blocos
+[2026-01-09 11:18:28] [STATUS ] Lendo... (0/15)
+[2026-01-09 11:18:32] [WARN   ] Parar solicitado. Reiniciar motor ao finalizar.
+[2026-01-09 11:18:32] [STATUS ] Leitura cancelada.
+[2026-01-09 11:18:32] [WARN   ] Leitura cancelada.
+[2026-01-09 11:18:32] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-09 11:18:35] [INFO   ] Config salva em D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\config_tts_clipboard_mp3.json
+[2026-01-13 21:06:51] [INFO   ] Inicializando v0.6.7
+[2026-01-13 21:06:51] [INFO   ] Config: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\config_tts_clipboard_mp3.json
+[2026-01-13 21:06:51] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-13 21:07:34] [INFO   ] Conversão MP3 iniciada: 2 blocos → Este é o espaço ideal para começarmos nossa jornada juntos. O curso de Arduino com Tinkercad foi pensado para quem está .mp3 (out=D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3)
+[2026-01-13 21:07:34] [INFO   ] MP3 cfg: backend=edge voice=pt-BR-FranciscaNeural rate=+0% pitch=+0Hz | gTTS tld=com.br slow=False
+[2026-01-13 21:07:34] [STATUS ] Gerando MP3... (0/2)
+[2026-01-13 21:07:42] [INFO   ] Conversão concluída: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3\Este é o espaço ideal para começarmos nossa jornada juntos. O curso de Arduino com Tinkercad foi pensado para quem está .mp3
+[2026-01-13 21:07:42] [STATUS ] OK: Este é o espaço ideal para começarmos nossa jornada juntos. O curso de Arduino com Tinkercad foi pensado para quem está .mp3
+[2026-01-13 21:07:42] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-13 21:09:06] [INFO   ] Conversão MP3 iniciada: 1 blocos → Tutor Maker.mp3 (out=D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3)
+[2026-01-13 21:09:06] [INFO   ] MP3 cfg: backend=edge voice=pt-BR-FranciscaNeural rate=+0% pitch=+0Hz | gTTS tld=com.br slow=False
+[2026-01-13 21:09:06] [STATUS ] Gerando MP3... (0/1)
+[2026-01-13 21:09:10] [INFO   ] Conversão concluída: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3\Tutor Maker.mp3
+[2026-01-13 21:09:10] [STATUS ] OK: Tutor Maker.mp3
+[2026-01-13 21:09:10] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-13 21:10:09] [INFO   ] Conversão MP3 iniciada: 11 blocos → Aula 01 - Introdução ao Tinkercad e Simulação de Circuitos com Arduinod.mp3 (out=D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3)
+[2026-01-13 21:10:09] [INFO   ] MP3 cfg: backend=edge voice=pt-BR-FranciscaNeural rate=+0% pitch=+0Hz | gTTS tld=com.br slow=False
+[2026-01-13 21:10:09] [STATUS ] Gerando MP3... (0/11)
+[2026-01-13 21:10:36] [WARN   ] Parar solicitado. Reiniciar motor ao finalizar.
+[2026-01-13 21:10:39] [ERROR  ] Erro em conversão MP3: Operação cancelada pelo usuário.
+[2026-01-13 21:10:39] [STATUS ] Falhou/cancelado: Operação cancelada pelo usuário.
+[2026-01-13 21:10:39] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-13 21:10:39] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-13 21:10:39] [WARN   ] Motor reiniciado manualmente.
+[2026-01-13 21:11:59] [INFO   ] Conversão MP3 iniciada: 11 blocos → Aula 01 - Introdução ao Tinkercad e Simulação de Circuitos com Arduinod.mp3 (out=D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3)
+[2026-01-13 21:11:59] [INFO   ] MP3 cfg: backend=edge voice=pt-BR-FranciscaNeural rate=+0% pitch=+0Hz | gTTS tld=com.br slow=False
+[2026-01-13 21:11:59] [STATUS ] Gerando MP3... (0/11)
+[2026-01-13 21:14:09] [INFO   ] Conversão concluída: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3\Aula 01 - Introdução ao Tinkercad e Simulação de Circuitos com Arduinod.mp3
+[2026-01-13 21:14:09] [STATUS ] OK: Aula 01 - Introdução ao Tinkercad e Simulação de Circuitos com Arduinod.mp3
+[2026-01-13 21:14:09] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-13 21:28:02] [INFO   ] Inicializando v0.6.7
+[2026-01-13 21:28:02] [INFO   ] Config: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\config_tts_clipboard_mp3.json
+[2026-01-13 21:28:03] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-13 21:28:11] [INFO   ] Conversão MP3 iniciada: 15 blocos → Aula 03 - Monitoramento de Luminosidade com LDR e Comunicação Serial.mp3 (out=D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3)
+[2026-01-13 21:28:11] [INFO   ] MP3 cfg: backend=edge voice=pt-BR-FranciscaNeural rate=+0% pitch=+0Hz | gTTS tld=com.br slow=False
+[2026-01-13 21:28:11] [STATUS ] Gerando MP3... (0/15)
+[2026-01-13 21:28:19] [INFO   ] Inicializando v0.6.7
+[2026-01-13 21:28:19] [INFO   ] Config: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\config_tts_clipboard_mp3.json
+[2026-01-13 21:28:19] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-13 21:28:30] [INFO   ] Conversão MP3 iniciada: 10 blocos → Aula 02 -Utilizando a Protoboard no Tinkercad_ Guia Completo com Arduino.mp3 (out=D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3)
+[2026-01-13 21:28:30] [INFO   ] MP3 cfg: backend=edge voice=pt-BR-FranciscaNeural rate=+0% pitch=+0Hz | gTTS tld=com.br slow=False
+[2026-01-13 21:28:30] [STATUS ] Gerando MP3... (0/10)
+[2026-01-13 21:29:49] [STATUS ] OK: Aula 02 -Utilizando a Protoboard no Tinkercad_ Guia Completo com Arduino.mp3
+[2026-01-13 21:29:49] [INFO   ] Conversão concluída: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3\Aula 02 -Utilizando a Protoboard no Tinkercad_ Guia Completo com Arduino.mp3
+[2026-01-13 21:29:49] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-13 21:30:00] [INFO   ] Conversão concluída: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3\Aula 03 - Monitoramento de Luminosidade com LDR e Comunicação Serial.mp3
+[2026-01-13 21:30:00] [STATUS ] OK: Aula 03 - Monitoramento de Luminosidade com LDR e Comunicação Serial.mp3
+[2026-01-13 21:30:00] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-13 21:33:25] [INFO   ] Solicitado fechamento do app.
+[2026-01-13 21:33:25] [INFO   ] Encerrando.
+[2026-01-13 21:33:28] [INFO   ] Solicitado fechamento do app.
+[2026-01-13 21:33:28] [INFO   ] Encerrando.
+[2026-01-13 21:48:40] [INFO   ] Inicializando v0.6.7
+[2026-01-13 21:48:40] [INFO   ] Config: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\config_tts_clipboard_mp3.json
+[2026-01-13 21:48:40] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-13 21:49:26] [INFO   ] Conversão MP3 iniciada: 5 blocos → Aula 04 – Display de 7 Segmentos com Arduino no Tinkercad.mp3 (out=D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3)
+[2026-01-13 21:49:26] [INFO   ] MP3 cfg: backend=edge voice=pt-BR-FranciscaNeural rate=+0% pitch=+0Hz | gTTS tld=com.br slow=False
+[2026-01-13 21:49:26] [STATUS ] Gerando MP3... (0/5)
+[2026-01-13 21:50:27] [INFO   ] Conversão concluída: D:\+Espaço CMaker\Projetos\#2026\01-Converte Texto em MP3\dist\saida_mp3\Aula 04 – Display de 7 Segmentos com Arduino no Tinkercad.mp3
+[2026-01-13 21:50:27] [STATUS ] OK: Aula 04 – Display de 7 Segmentos com Arduino no Tinkercad.mp3
+[2026-01-13 21:50:27] [INFO   ] Motor pyttsx3 reiniciado.
+[2026-01-13 21:52:45] [INFO   ] Solicitado fechamento do app.
+[2026-01-13 21:52:45] [INFO   ] Encerrando.

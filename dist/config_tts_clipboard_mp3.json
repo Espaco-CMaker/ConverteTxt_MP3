@@ -7,7 +7,7 @@
   "mp3_pitch": "+0Hz",
   "gt_tld_label": "pt-BR (padrão)",
   "gt_speed": "Normal",
-  "read_voice_name": "",
-  "read_rate": 175,
+  "read_voice_name": "Microsoft Maria Desktop - Portuguese(Brazil)",
+  "read_rate": 240,
   "chunk_max_chars": 1100
 }
